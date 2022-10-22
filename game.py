@@ -1,5 +1,11 @@
 from parser import parse
 from utilities import prose_iterator, first_case, clear, simplify_name
+from help import output_commands, about
+import random
+
+import sys
+sys.setrecursionlimit(15000
+                      )
 
 
 debug = False
@@ -8,6 +14,14 @@ run_game = True
 
 class Location:
     """A class representing locations."""
+
+    @classmethod
+    def find(self, name):
+        """Look up a room by its name."""
+        for room in Location.all:
+            if name.lower() == room.name.lower():
+                return room
+
 
     # A list to keep track of all locations
     all = []
@@ -52,6 +66,14 @@ class Location:
             self.west.east = self
 
         Location.all.append(self)
+
+
+        
+
+
+    def foreground_contents(self):
+        """Return a list of contents not in the background."""
+        return [item for item in self.contents if not item.background]
 
     def simplified_name(self):
         """Return the location's name in lower case and with no articles."""
@@ -133,6 +155,8 @@ class Entity:
         eat_description=False,
         big=False,
         player=False,
+        quantity=False,
+        background=False,
         contents=False,
         proper=False,
         aliases=False,
@@ -143,9 +167,11 @@ class Entity:
         self.location = location
         self.edible = edible
         self.proper = proper
+        self.quantity = quantity
+        self.background = background
         self.eat_description = eat_description
         self.big = big
-        self.aliases = (aliases or [],)
+        self.aliases = aliases or []
         self.player = player
 
         self.contents = contents or []
@@ -207,9 +233,9 @@ class Entity:
         print()
         print(self.location.description)
 
-        if self.location.contents:
+        if self.location.foreground_contents():
             print()
-            print(f"You see here {prose_iterator(self.location.contents)}")
+            print(f"You see here {prose_iterator(self.location.foreground_contents())}")
 
     def simplified_name(self):
         """Return the entity's name in lower case and with no articles."""
@@ -227,6 +253,9 @@ class Entity:
 
         if not self.name:
             return ""
+
+        if self.quantity:
+            return "some"
 
         lower = self.name.lower()
         if self.proper and not lower.startswith("the"):
@@ -299,23 +328,42 @@ class Entity:
             print("You're not carrying that.")
             return False
 
+    def visible(self, entity):
+        """Returns true if this entity is visible to another entity."""
+        return self in entity.location.all_present()
+
     def move(self, direction):
         """Move in a specific direction."""
 
         direction = direction.lower()
 
+        visible_before_move = self.visible(player)
+
         if direction not in self.location.exits():
-            print(f"You cannot move {direction} from here.")
+            if self.player:
+                print(f"You cannot move {direction} from here.")
             return False
         else:
             new_location = self.location.exits()[direction]
             self.change_location(new_location)
-            print(f"You move toward the {new_location.simplified_name()}.")
+            if self.player:
+                print(f"You move toward the {new_location.simplified_name()}.")
+                print()
+                print(self.look())
+            visible_after_move = self.visible(player)
+
+            if not visible_before_move and visible_after_move:
+                print(f"{self.article_name} arrives from the {direction}.")
+            if visible_before_move and not visible_after_move:
+                print(f"{self.article_name} arrives from the {direction}.")
+
             return True
 
     def eat(self, foodstuff):
         if not foodstuff.edible:
-            print("That's not edible.")
+            print(f"{foodstuff.article_name()} is not edible.")
+            if foodstuff.player:
+                print("\nAlso, pretty weird to try to eat yourself.")
             return False
         if foodstuff.eat_description:
             print(foodstuff.eat_description)
@@ -351,6 +399,97 @@ pumpkin_patch = Location(
     east=cottage,
 )
 
+alfalfa_patch = Location(
+    "Alfalfa patch",
+    description='The alfalfa patch is north of your orchard. Alfalfa is a deep-rooted plant and enriches the nearby soil. You use alfalfa in your apothecary. It\'s also fun to say the word "alfalfa."',
+    west=cottage,
+    contents=[
+        Entity(
+            "alfalfa",
+            description="Big ol' purple leaves on this alfalfa plant.",
+            eat_description="You munch a few leaves of alfalfa. Even though it's usually grown for forage, it's actually pretty tasty, though it takes you awhile to chew. It has a slightly nutty taste.",
+            quantity=True,
+            edible=True,
+        )
+    ],
+)
+
+
+orchard_north = Location(
+    "Orchard, north end",
+    description="If there's one thing you like, it's an apple tree. Unlike commercial orchards that force growth using weird chimerical grafts onto rootstock, these trees are healthy and likely to stand for the guts of a century. Apple trees like being on the edge of things—they want ruminants to come and have a few bites. They're also pretty social, and like to have other kinds of trees around.",
+    north=alfalfa_patch,
+    contents=[
+        Entity(
+            "Fallen apple",
+            description="This apple got things started early this fall, and is already getting a little mushy.",
+            eat_description="One half of the apple is a little brown. You take a bite from the other side. It's still sweet, with a little bitterness for character. You crunch your way to the core and eat that, too. Your foregardener always said the core was the best part, and at some point the opinion snuck up on you and lodged in your brain.",
+            edible=True,
+        )
+    ],
+)
+
+orchard_south = Location(
+    "Orchard, south end",
+    description="""The south end of the orchard. 
+
+Last time you walked through here, you were with a visitor from the big city. The visitor asked what variety the trees here were. You told her that, like people, each apple tree is a unique individual. Those science fellows call it being heterozygous, but you just call it not being boring. The trees down here are a little bitter, though, and probably best for cider or cooking.
+
+You see some holes around the base of the trees. Chucks been digging.""",
+    north=orchard_north,
+    contents=[
+        Entity(
+            "Holes",
+            description="As destructive as they are, you have a soft spot for chucks. But if you stick your foot into one of these holes after twilight and break an ankle, that soft spot might hard up a bit.",
+            quantity=True,
+            aliases=["hole", "chuck holes", "groundhog holes"],
+        )
+    ],
+)
+
+
+
+
+def maze(i=random.randint(4,7), first=True, coming_from=False):
+    """Return a maze of twisty little passages."""
+
+    i -= 1
+
+    if i == 0:
+        return
+
+    directions = {}
+
+    cardinals = ['north', 'south', 'east', 'west']
+
+    if coming_from and coming_from in cardinals:
+        cardinals.remove(coming_from)
+
+    random.shuffle(cardinals)
+
+    exits = {}
+    chance_to_generate_room = 100
+    for cardinal in cardinals:
+        if chance_to_generate_room < 0:
+            break
+        if random.randint(1, 100) < chance_to_generate_room:
+            exits[cardinal] = maze(i=i, coming_from=cardinal, first=False)
+            chance_to_generate_room -= random.randint(20, 60)
+        
+
+
+    if first:
+        room = Location('Maze Start',
+                 description='You are at the beginning of a maze of twisty little passages, all alike.',
+                        **exits)
+
+
+    room = Location('Maze',
+             description='You are in a maze of twisty little passages, all alike.',
+             **exits)
+    return room
+
+
 realy_big_pumpkin = Entity(
     "Really big pumpkin",
     description="This enormous pumpkin is truly formidable.",
@@ -368,6 +507,7 @@ normal_pumpkin = Entity(
 weird_shaped_pumpkin = Entity(
     "Weirdly shaped pumpkin",
     description="There's always one. This pumpkin is shaped like a starfish and it's orange color is streaked with green",
+    eat_description="You cut open the oddly-shaped pumpkin and eat some of the interior. Despite looking odd, the mush inside tastes like the contents of any other pumpkin.",
     location=pumpkin_patch,
     edible=True,
 )
@@ -375,6 +515,7 @@ weird_shaped_pumpkin = Entity(
 
 player = Entity(
     "The Gardener",
+    aliases=["self", "me"],
     description="A creature of sun and soil. You tend the land.",
     player=True,
     location=cottage,
@@ -383,6 +524,8 @@ player = Entity(
         Entity("Trowel", description="A simple hand tool for turning over the soil.")
     ],
 )
+
+
 
 print(
     """"
@@ -402,6 +545,7 @@ Press return to continue.
 input()
 clear()
 player.look()
+
 
 
 # Game loop
@@ -435,6 +579,20 @@ while run_game:
     if verb == "quit":
         print("Departing the garden...")
         run_game = False
+    if verb == 'help':
+        output_commands()
+    if verb == 'xyzzy':
+        print('You are transported to a mysterious maze...\n')
+        maze()
+        player.change_location(Location.find('maze start'))
+        player.name = 'The Spelunker'
+        player.look()
+    if verb == 'wake':
+        print('You try to rouse yourself, but you cannot wake up from this beautiful dream.')
+    if verb == 'debug':
+        breakpoint()
+    if verb == 'about':
+        about()
     if verb == "clear":
         clear()
     if verb == "inventory":

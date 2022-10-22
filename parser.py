@@ -38,6 +38,8 @@ tokens = {
 
 
 synonyms = {
+    'h': 'help',
+    'commands': 'help',
     "l": "look",
     "scrutinize": "look",
     "examine": "look",
