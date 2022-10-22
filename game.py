@@ -4,8 +4,8 @@ from help import output_commands, about
 import random
 
 import sys
-sys.setrecursionlimit(15000
-                      )
+
+sys.setrecursionlimit(15000)
 
 
 debug = False
@@ -21,7 +21,6 @@ class Location:
         for room in Location.all:
             if name.lower() == room.name.lower():
                 return room
-
 
     # A list to keep track of all locations
     all = []
@@ -66,10 +65,6 @@ class Location:
             self.west.east = self
 
         Location.all.append(self)
-
-
-        
-
 
     def foreground_contents(self):
         """Return a list of contents not in the background."""
@@ -448,9 +443,7 @@ You see some holes around the base of the trees. Chucks been digging.""",
 )
 
 
-
-
-def maze(i=random.randint(4,7), first=True, coming_from=False):
+def maze(i=random.randint(4, 7), first=True, coming_from=False):
     """Return a maze of twisty little passages."""
 
     i -= 1
@@ -460,7 +453,7 @@ def maze(i=random.randint(4,7), first=True, coming_from=False):
 
     directions = {}
 
-    cardinals = ['north', 'south', 'east', 'west']
+    cardinals = ["north", "south", "east", "west"]
 
     if coming_from and coming_from in cardinals:
         cardinals.remove(coming_from)
@@ -475,18 +468,19 @@ def maze(i=random.randint(4,7), first=True, coming_from=False):
         if random.randint(1, 100) < chance_to_generate_room:
             exits[cardinal] = maze(i=i, coming_from=cardinal, first=False)
             chance_to_generate_room -= random.randint(20, 60)
-        
-
 
     if first:
-        room = Location('Maze Start',
-                 description='You are at the beginning of a maze of twisty little passages, all alike.',
-                        **exits)
+        room = Location(
+            "Maze Start",
+            description="You are at the beginning of a maze of twisty little passages, all alike.",
+            **exits,
+        )
 
-
-    room = Location('Maze',
-             description='You are in a maze of twisty little passages, all alike.',
-             **exits)
+    room = Location(
+        "Maze",
+        description="You are in a maze of twisty little passages, all alike.",
+        **exits,
+    )
     return room
 
 
@@ -526,7 +520,6 @@ player = Entity(
 )
 
 
-
 print(
     """"
 
@@ -545,7 +538,6 @@ Press return to continue.
 input()
 clear()
 player.look()
-
 
 
 # Game loop
@@ -579,19 +571,21 @@ while run_game:
     if verb == "quit":
         print("Departing the garden...")
         run_game = False
-    if verb == 'help':
+    if verb == "help":
         output_commands()
-    if verb == 'xyzzy':
-        print('You are transported to a mysterious maze...\n')
+    if verb == "xyzzy":
+        print("You are transported to a mysterious maze...\n")
         maze()
-        player.change_location(Location.find('maze start'))
-        player.name = 'The Spelunker'
+        player.change_location(Location.find("maze start"))
+        player.name = "The Spelunker"
         player.look()
-    if verb == 'wake':
-        print('You try to rouse yourself, but you cannot wake up from this beautiful dream.')
-    if verb == 'debug':
+    if verb == "wake":
+        print(
+            "You try to rouse yourself, but you cannot wake up from this beautiful dream."
+        )
+    if verb == "debug":
         breakpoint()
-    if verb == 'about':
+    if verb == "about":
         about()
     if verb == "clear":
         clear()

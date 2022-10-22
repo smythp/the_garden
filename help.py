@@ -14,8 +14,7 @@ command_descriptions = {
 def output_commands():
     """Format and output the possible commands in the game."""
 
-    print('*Available commands*:')
-
+    print("*Available commands*:")
 
     for command in command_descriptions:
         description = command_descriptions[command]
@@ -28,6 +27,8 @@ def output_commands():
 def about():
     """Print some information about the game."""
 
-    print('''*About*
+    print(
+        """*About*
 
-This game was created as an instructional aid by Patrick Smyth in October, 2022. The repository for the game is originally at https://github.com/smythp/the_garden.''')
+This game was created as an instructional aid by Patrick Smyth in October, 2022. The repository for the game is originally at https://github.com/smythp/the_garden."""
+    )
