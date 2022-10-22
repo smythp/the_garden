@@ -48,7 +48,6 @@ def clear():
         _ = system("clear")
 
 
-
 def simplify_name(name):
     """Create a simplified version of anem, with no articles and lower case."""
     name = name.lower()

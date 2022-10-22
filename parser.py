@@ -11,7 +11,7 @@ tokens = {
         "up",
         "down",
         "outside",
-        'inside',
+        "inside",
         "exit",
         "n",
         "s",
@@ -42,9 +42,9 @@ synonyms = {
     "scrutinize": "look",
     "examine": "look",
     "x": "look",
-    'z': 'wait',
+    "z": "wait",
     "i": "inventory",
-    'out': 'outside',
+    "out": "outside",
     "n": "north",
     "s": "south",
     "e": "east",
@@ -87,9 +87,9 @@ def parse(input):
     if words[0] in tokens["directions"]:
         parsed["verb"] = "go"
         parsed["direct_object"] = words[0]
-    elif words[0] == 'in':
+    elif words[0] == "in":
         parsed["verb"] = "go"
-        parsed["direct_object"] = 'inside'
+        parsed["direct_object"] = "inside"
     elif "in" in words:
         in_location = words.index("in")
         parsed["verb"] = words[0]

@@ -53,11 +53,9 @@ class Location:
 
         Location.all.append(self)
 
-
     def simplified_name(self):
         """Return the location's name in lower case and with no articles."""
         return simplify_name(self.name)
-
 
     def all_present(self, entity=False):
         """Generate a list of all entities present at the location."""
@@ -154,7 +152,6 @@ class Entity:
 
         for entity in self.contents:
             entity.location = self
-        
 
         if self.location:
             self.location.add(self)
@@ -217,8 +214,6 @@ class Entity:
     def simplified_name(self):
         """Return the entity's name in lower case and with no articles."""
         return simplify_name(self.name)
-
-
 
     def match_name(self, name):
         """Given a string, return true if the string is the entity's simplified name or an alias."""
@@ -285,15 +280,14 @@ class Entity:
             print(f"The {thing.lower_case_name()} is too big to take.")
             return False
 
-
     def examine(self, thing):
         """Take a look at something."""
 
-        print(f"""You examine {thing.article_name()}.
+        print(
+            f"""You examine {thing.article_name()}.
 
-{thing.description}""")
-
-
+{thing.description}"""
+        )
 
     def drop(self, thing):
         """Drop an item at current location."""
@@ -342,11 +336,13 @@ inside_cottage = Location(
     description="The functional yet comfortable interior to the small cottage in the center of the garden. A large pot hangs in the fireplace.",
     outside=cottage,
     contents=[
-        Entity('A pot',
-               description="A large cast-iron pot, ideal for simmering stews and brewing potations.",
-               big=True)]
-    )
-
+        Entity(
+            "A pot",
+            description="A large cast-iron pot, ideal for simmering stews and brewing potations.",
+            big=True,
+        )
+    ],
+)
 
 
 pumpkin_patch = Location(
@@ -383,7 +379,9 @@ player = Entity(
     player=True,
     location=cottage,
     proper=True,
-    contents=[Entity('Trowel', description='A simple hand tool for turning over the soil.')]
+    contents=[
+        Entity("Trowel", description="A simple hand tool for turning over the soil.")
+    ],
 )
 
 print(
@@ -425,7 +423,6 @@ while run_game:
     if verb == "go":
         player.move(direct)
 
-    
     if verb == "look":
         if not present_direct:
             player.look()
@@ -435,11 +432,6 @@ while run_game:
             else:
                 print(f"You dont' see a {direct} here to scrutinize.")
 
-
-            
-
-
-
     if verb == "quit":
         print("Departing the garden...")
         run_game = False
@@ -448,18 +440,14 @@ while run_game:
     if verb == "inventory":
         player.inventory()
     if verb == "exits":
-            exits = prose_iterator(player.location.exits().keys())
-            
-            print(f"From here you can move {exits}.")
+        exits = prose_iterator(player.location.exits().keys())
+
+        print(f"From here you can move {exits}.")
     if verb == "take":
         if present_direct:
             player.take(present_direct)
         else:
             print(f"You don't see a {direct} here to take.")
-
-
-
-
 
     if verb == "eat":
         if present_direct:
@@ -467,14 +455,10 @@ while run_game:
         else:
             print(f"You don't see a {direct} here to chow down on.")
 
-    if verb == 'wait':
-        print('Time passes...')
+    if verb == "wait":
+        print("Time passes...")
 
-    if verb == 'drop' and not present_direct:
+    if verb == "drop" and not present_direct:
         print(f"You don't have a {direct} to drop.")
-    elif verb == 'drop' and present_direct:
+    elif verb == "drop" and present_direct:
         player.drop(present_direct)
-    
-    
-    
-        
