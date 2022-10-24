@@ -64,6 +64,9 @@ synonyms = {
 
 def parse(input):
 
+    if not input:
+        return {}
+
     # Remove all characters except letters and spaces
     only_alphabetical = "".join(
         [letter for letter in input if letter.isalpha() or letter == " "]

@@ -3,11 +3,6 @@ from utilities import prose_iterator, first_case, clear, simplify_name
 from help import output_commands, about
 import random
 
-import sys
-
-sys.setrecursionlimit(15000)
-
-
 debug = False
 run_game = True
 
@@ -51,6 +46,7 @@ class Location:
         for entity in self.contents:
             entity.location = self
 
+        # When you specify a direction when instantiating a location, create a connection in the opposite direction in that other location.
         if self.north:
             self.north.south = self
         if self.south:
@@ -132,9 +128,11 @@ class Location:
         thing.location = self
 
     def __repr__(self):
+        """An object representation for a location."""
         return f"<Location: {self.name}>"
 
     def __str__(self):
+        """A string representation for a location."""
         return self.name
 
 
@@ -149,6 +147,7 @@ class Entity:
         edible=False,
         eat_description=False,
         big=False,
+        untakeable=False,
         player=False,
         quantity=False,
         background=False,
@@ -166,6 +165,7 @@ class Entity:
         self.background = background
         self.eat_description = eat_description
         self.big = big
+        self.untakeable = untakeable
         self.aliases = aliases or []
         self.player = player
 
@@ -189,6 +189,7 @@ class Entity:
             return self.name.lower()
 
     def __str__(self):
+        """A string representation for the entity."""
         return self.name
 
     def change_location(self, new_location):
@@ -197,6 +198,7 @@ class Entity:
         self.location = new_location
 
     def destroy(self):
+        """Erase the entity from the game."""
         self.location.contents.remove(self)
         del self
 
@@ -295,13 +297,24 @@ class Entity:
         return out
 
     def take(self, thing):
-        """Take something if it's not big."""
-        if not thing.big:
+        """Take something if it's takable."""
+        if thing.player:
+            print(
+                """You take yourself, thus pulling yourself up by your bootstraps. Rudolf Erich Raspe and possibly Margaret Thatcher would be proud of you.
+
+On second thought, you decide not to take yourself, whatever that would mean."""
+            )
+        elif thing.untakeable:
+            print(
+                f"It doesn't really make sense to take the {thing.simplified_name() }."
+            )
+        elif thing.big:
+            print(f"The {thing.simplified_name()} is too big to take.")
+        else:
             print(f"You take the {thing.lower_case_name()}")
             self.add(thing)
             return True
-        else:
-            print(f"The {thing.lower_case_name()} is too big to take.")
+
             return False
 
     def examine(self, thing):
@@ -325,6 +338,7 @@ class Entity:
 
     def visible(self, entity):
         """Returns true if this entity is visible to another entity."""
+
         return self in entity.location.all_present()
 
     def move(self, direction):
@@ -344,7 +358,7 @@ class Entity:
             if self.player:
                 print(f"You move toward the {new_location.simplified_name()}.")
                 print()
-                print(self.look())
+                self.look()
             visible_after_move = self.visible(player)
 
             if not visible_before_move and visible_after_move:
@@ -356,7 +370,7 @@ class Entity:
 
     def eat(self, foodstuff):
         if not foodstuff.edible:
-            print(f"{foodstuff.article_name()} is not edible.")
+            print(f"{foodstuff.article_name().title()} is not edible.")
             if foodstuff.player:
                 print("\nAlso, pretty weird to try to eat yourself.")
             return False
@@ -436,6 +450,7 @@ You see some holes around the base of the trees. Chucks been digging.""",
         Entity(
             "Holes",
             description="As destructive as they are, you have a soft spot for chucks. But if you stick your foot into one of these holes after twilight and break an ankle, that soft spot might hard up a bit.",
+            untakeable=True,
             quantity=True,
             aliases=["hole", "chuck holes", "groundhog holes"],
         )
@@ -513,6 +528,7 @@ player = Entity(
     description="A creature of sun and soil. You tend the land.",
     player=True,
     location=cottage,
+    big=True,
     proper=True,
     contents=[
         Entity("Trowel", description="A simple hand tool for turning over the soil.")
@@ -542,7 +558,11 @@ player.look()
 
 # Game loop
 while run_game:
+
     commands = parse(input(" > "))
+
+    if not commands:
+        continue
 
     if debug:
         print(commands)
@@ -578,6 +598,7 @@ while run_game:
         maze()
         player.change_location(Location.find("maze start"))
         player.name = "The Spelunker"
+        player.description = "You explore mazes. It's what you do."
         player.look()
     if verb == "wake":
         print(
